@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/ledger
+    username: ${DB_USERNAME:ledger}
+    password: ${DB_PASSWORD:ledger}
+
+  # Integration tests are self-contained: Flyway runs V1 + V2 against the
+  # docker-compose Postgres so the test does not require ledger-api to have
+  # started first. baseline-on-migrate handles the case where ledger-api has
+  # already applied the migrations (Flyway skips already-applied versions).
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+reconciliation:
+  # Suppress grace period so tests can use transactions posted moments ago
+  # without waiting 24 hours for them to become eligible for MISSING_EXTERNAL.
+  grace-period-hours: 0
+  amount-tolerance: 0.05
+
+  # Disable scheduled jobs so tests call reconcileOnce() synchronously.
+  # MockFeedGenerator and ReconciliationScheduler beans are not created.
+  scheduling:
+    enabled: false
+
+logging:
+  level:
+    com.ledger: DEBUG

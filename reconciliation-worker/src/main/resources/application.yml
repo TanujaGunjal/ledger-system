@@ -1,0 +1,41 @@
+server:
+  port: 9091   # ledger-api is on 9090; worker gets the next port
+
+spring:
+  application:
+    name: reconciliation-worker
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/ledger
+    username: ${DB_USERNAME:ledger}
+    password: ${DB_PASSWORD:ledger}
+
+  # ledger-api owns the schema and runs all Flyway migrations on startup.
+  # The worker connects as a read/write client — it does not manage DDL.
+  # To run the worker standalone (without ledger-api having started first),
+  # flip this to true and point locations at a copy of the migration scripts.
+  flyway:
+    enabled: false
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false   # Instant → ISO-8601 string in JSON responses
+
+reconciliation:
+  # How long after posting a transaction we wait before flagging MISSING_EXTERNAL.
+  # Set to 0 in tests (via test application.yml) so tests are not time-gated.
+  grace-period-hours: 24
+
+  # |internal_debit_sum − external_amount| must be <= this to count as a match.
+  # Per-currency config is deferred to Phase 4; this applies to all currencies.
+  amount-tolerance: 0.05
+
+  # Whether the @Scheduled background jobs (MockFeedGenerator, ReconciliationScheduler)
+  # are active. Set to false in tests so reconcileOnce() can be called synchronously
+  # without the scheduler also firing and producing concurrent mutations.
+  scheduling:
+    enabled: true
+
+logging:
+  level:
+    com.ledger: DEBUG

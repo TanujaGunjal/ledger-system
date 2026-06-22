@@ -1,0 +1,20 @@
+# Java build artifacts
+**/target/
+**/.mvn/repository/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db

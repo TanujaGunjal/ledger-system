@@ -1,0 +1,39 @@
+server:
+  port: 9090
+
+spring:
+  application:
+    name: ledger-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/ledger
+    username: ${DB_USERNAME:ledger}
+    password: ${DB_PASSWORD:ledger}
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all           # wait for all in-sync replicas to ack before .get() returns
+      retries: 3
+    consumer:
+      group-id: ledger-api-consumer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+
+logging:
+  level:
+    com.ledger: DEBUG
+    org.springframework.jdbc.core: DEBUG

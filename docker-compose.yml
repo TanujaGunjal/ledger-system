@@ -1,0 +1,117 @@
+version: "3.8"
+
+services:
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: ledger-postgres
+    environment:
+      POSTGRES_DB: ledger
+      POSTGRES_USER: ledger
+      POSTGRES_PASSWORD: ledger
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledger -d ledger"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ledger-net
+
+  redis:
+    image: redis:7
+    container_name: ledger-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - ledger-net
+
+  # Kafka-API-compatible, single binary. Much faster to start than real Kafka + ZooKeeper.
+  # advertise-kafka-addr uses the service name so ledger-api can reach it inside the network.
+  redpanda:
+    image: redpandadata/redpanda:v23.3.5
+    container_name: ledger-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --overprovisioned
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+    ports:
+      - "9092:9092"
+    networks:
+      - ledger-net
+
+  # ── Application services ────────────────────────────────────────────────────
+  ledger-api:
+    build:
+      context: ./ledger-api
+      dockerfile: Dockerfile
+    container_name: ledger-api
+    ports:
+      - "9090:9090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ledger
+      SPRING_DATASOURCE_USERNAME: ledger
+      SPRING_DATASOURCE_PASSWORD: ledger
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SPRING_DATA_REDIS_HOST: redis
+      SERVER_PORT: 9090
+      # Avoids "Asia/Calcutta" JDBC timezone rejection on Postgres 16
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=UTC"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9090/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ledger-net
+
+  reconciliation-worker:
+    build:
+      context: ./reconciliation-worker
+      dockerfile: Dockerfile
+    container_name: reconciliation-worker
+    ports:
+      - "9091:9091"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ledger
+      SPRING_DATASOURCE_USERNAME: ledger
+      SPRING_DATASOURCE_PASSWORD: ledger
+      SERVER_PORT: 9091
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=UTC"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ledger-api:
+        condition: service_healthy
+    networks:
+      - ledger-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ledger-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - ledger-api
+      - reconciliation-worker
+    networks:
+      - ledger-net
+
+networks:
+  ledger-net:
+    driver: bridge
+
+volumes:
+  pgdata:
