@@ -97,23 +97,25 @@ the deadlock scenario and the fix (always acquire locks in ascending account ID 
 
 ## Running tests
 
-Integration tests require a live Postgres instance. Run them against the
-compose stack:
+Integration tests use **Testcontainers** to automatically provision isolated PostgreSQL databases for each test class, ensuring a hermetic test environment. 
+
+You can run the tests without needing to pre-provision any infrastructure:
 
 ```bash
-# ledger-api tests (includes ConcurrencyIntegrationTest, PostTransactionIntegrationTest,
-# OutboxKafkaIntegrationTest — the last uses an in-process embedded Kafka broker)
+# ledger-api tests (Concurrency, Outbox Publisher, etc.)
 cd ledger-api
-./mvnw test -Duser.timezone=UTC
+./mvnw clean test
 
 # reconciliation-worker tests
 cd reconciliation-worker
-./mvnw test -Duser.timezone=UTC
+./mvnw clean test
+
+# fraud-service tests
+cd fraud-service
+./mvnw clean test
 ```
 
-`-DskipTests` is used in the Dockerfiles because `docker build` has no network
-access to the compose stack. Tests are structurally dependent on a live database
-and must be run separately.
+The project includes a complete **GitHub Actions CI/CD pipeline** (`.github/workflows/ci.yml`) that automatically runs all unit and integration tests, and builds the frontend on every push to the `main` branch.
 
 ## Known limitations
 
@@ -146,7 +148,5 @@ These are real constraints in the current implementation, not oversights:
 - **Admin dispute-resolution endpoint + UI.** A `POST /api/v1/reconciliation/exceptions/{id}/resolve` endpoint with an optional `resolutionNote` field, and a modal on the Reconciliation Queue to manually close exceptions that the engine cannot self-resolve (e.g. known rounding differences accepted by the business).
 
 - **WebSocket live balance updates.** The Kafka consumer in `ledger-api` already has a `@KafkaListener` stub and the WebSocket dependency is in the POM. Wire `LedgerEntryPublishedEvent` through a `SimpMessagingTemplate` so the Ledger Explorer balance updates in real time without polling.
-
-- **Testcontainers replacing the compose dependency for tests.** Currently integration tests require `docker compose up` before `mvn test`. Testcontainers would spin up a throwaway Postgres per test class, making the test suite self-contained and safe to run in CI without pre-provisioned infrastructure.
 
 - **Per-currency amount tolerance in the reconciliation engine.** Replace the hard equality check with a configurable tolerance map (e.g. `USD: 0.01`, `EUR: 0.005`) to handle known FX rounding differences without manual exception closure.
