@@ -30,15 +30,21 @@ jobs:
 
     - name: Build and Test Ledger API
       working-directory: ./ledger-api
-      run: ./mvnw clean test
+      run: |
+        chmod +x mvnw
+        ./mvnw clean test
 
     - name: Build and Test Reconciliation Worker
       working-directory: ./reconciliation-worker
-      run: ./mvnw clean test
+      run: |
+        chmod +x mvnw
+        ./mvnw clean test
 
     - name: Build and Test Fraud Service
       working-directory: ./fraud-service
-      run: ./mvnw clean test
+      run: |
+        chmod +x mvnw
+        ./mvnw clean test
 
     - name: Build Frontend
       working-directory: ./frontend
