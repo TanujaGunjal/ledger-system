@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.4</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.ledger</groupId>
+    <artifactId>fraud-service</artifactId>
+    <version>0.1.0</version>
+    <name>fraud-service</name>
+    <description>Fraud Detection Service — independently deployable microservice that consumes
+        TransactionPosted events from Kafka, runs a configurable rule-based scoring engine,
+        and exposes REST endpoints for querying and reviewing fraud cases. Connects to the
+        same Postgres database as ledger-api but does not own the schema (Flyway disabled).</description>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <dependencies>
+        <!-- Web layer: REST endpoints for scoring, querying, and reviewing fraud cases -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Plain JDBC — same choice as ledger-api and reconciliation-worker; avoids JPA
+             overhead for what is essentially point-lookup + INSERT fraud case work. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Flyway: present on the classpath so the auto-configuration does not fail,
+             but disabled in main application.yml (ledger-api owns the schema).
+             Enabled in test application.yml for self-contained integration tests. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- Kafka consumer: subscribes to ledger.transactions topic and triggers
+             fraud scoring for every TransactionPosted event -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- spring-kafka-test provides EmbeddedKafkaBroker for consumer integration tests.
+             No Docker or Testcontainers needed — the broker runs in-process. -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Force UTC in the test JVM so the JDBC driver doesn't send
+                         a timezone name that Postgres 16 doesn't recognise
+                         (e.g. "Asia/Calcutta" is the deprecated name for IST).
+                         Matches the same override used in ledger-api and reconciliation-worker. -->
+                    <argLine>-Duser.timezone=UTC</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

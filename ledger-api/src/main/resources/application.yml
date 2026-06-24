@@ -37,3 +37,12 @@ logging:
   level:
     com.ledger: DEBUG
     org.springframework.jdbc.core: DEBUG
+
+# Base URL of the fraud-service for the pre-posting fraud gate in TransactionController.
+# Default uses the Docker service name (fraud-service:9092) which works inside the
+# compose network. Override with FRAUD_SERVICE_URL env var for local dev without Docker
+# (e.g. FRAUD_SERVICE_URL=http://localhost:9093).
+fraud:
+  service:
+    url: ${FRAUD_SERVICE_URL:http://fraud-service:9092}
+

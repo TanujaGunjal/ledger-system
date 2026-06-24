@@ -1,0 +1,76 @@
+server:
+  port: 9092
+
+spring:
+  application:
+    name: fraud-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/ledger
+    username: ${DB_USERNAME:ledger}
+    password: ${DB_PASSWORD:ledger}
+
+  # ledger-api owns the schema and runs all Flyway migrations on startup.
+  # The fraud-service connects as a read/write client — it does not manage DDL.
+  # Flyway is kept on the classpath so tests can enable it in test application.yml
+  # for a self-contained test environment without requiring ledger-api to have run.
+  flyway:
+    enabled: false
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: fraud-service-consumer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # earliest: re-process all events since the beginning of the topic on a fresh
+      # consumer group. This ensures the fraud-service doesn't miss events that were
+      # published before it first started.
+      auto-offset-reset: earliest
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false   # Instant → ISO-8601 string in JSON responses
+
+fraud:
+  # Whether background scheduling (if any) is active. Set to false in tests.
+  scheduling:
+    enabled: true
+
+  # All scoring thresholds are externalised here so they can be tuned per-environment
+  # (e.g. tighter rules in prod, looser in sandbox) without recompilation.
+  rules:
+    velocity:
+      # Look-back window for counting recent DEBIT entries on the same account.
+      window-minutes: 10
+      # 3–4 debits in the window triggers a medium velocity score contribution.
+      medium-threshold: 3
+      # 8+ debits in the window triggers the maximum velocity score contribution.
+      high-threshold: 8
+    amount:
+      # Transactions above this value earn a "large transaction" score addition.
+      large-transaction: 50000
+      # Transactions above this value override with the maximum amount score.
+      very-large-transaction: 100000
+      # Ratio of transaction amount to current account balance above which a
+      # "high balance-consumption" score is added.
+      balance-ratio-threshold: 0.80
+    new-account:
+      # Accounts created within this many hours are considered very new (high risk).
+      high-risk-hours: 1
+      # Accounts created within this many hours with a large transaction are medium risk.
+      medium-risk-hours: 24
+      # Threshold amount (in account currency) that triggers the medium-risk new-account rule.
+      medium-risk-amount: 1000
+
+  risk:
+    # Score boundaries for risk level classification.
+    # Score  0–30:  LOW
+    # Score 31–69:  MEDIUM
+    # Score 70–100: HIGH
+    medium-score-threshold: 31
+    high-score-threshold: 70
+
+logging:
+  level:
+    com.ledger: DEBUG

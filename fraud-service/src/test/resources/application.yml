@@ -1,0 +1,18 @@
+# Test application.yml — overrides main config for the test JVM.
+#
+# Key overrides:
+#   1. Flyway enabled=true so integration tests are self-contained and do not
+#      require ledger-api to have run first (tests provision their own schema).
+#   2. scheduling.enabled=false so the @Scheduled background jobs (if any)
+#      do not fire concurrently with tests and produce unexpected DB mutations.
+#   3. Kafka bootstrap-servers is overridden by EmbeddedKafkaBroker in tests
+#      that need it via @EmbeddedKafka — otherwise spring-kafka silently
+#      skips consumer initialisation when no broker is reachable.
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+fraud:
+  scheduling:
+    enabled: false

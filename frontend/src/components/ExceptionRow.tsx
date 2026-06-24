@@ -50,7 +50,7 @@ export default function ExceptionRow({ exception }: Props) {
   } = exception;
 
   // details is a JSON string from the backend — must be parsed, not spread directly
-  const parsed = parseDetails(details);
+  const parsed = parseDetails(details) as Record<string, string>;
   const delta   = parsed.delta;
 
   const isMissingExternal = exceptionType === 'MISSING_EXTERNAL';

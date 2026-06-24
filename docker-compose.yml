@@ -96,6 +96,38 @@ services:
     networks:
       - ledger-net
 
+  fraud-service:
+    build:
+      context: ./fraud-service
+      dockerfile: Dockerfile
+    container_name: fraud-service
+    # Host port 9093 avoids conflict with Redpanda which also publishes 9092 on the host.
+    # Inside the Docker network, fraud-service listens on 9092 (SERVER_PORT below).
+    # ledger-api calls http://fraud-service:9092  (internal)
+    # Browser/frontend calls http://localhost:9093 (external)
+    ports:
+      - "9093:9092"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ledger
+      SPRING_DATASOURCE_USERNAME: ledger
+      SPRING_DATASOURCE_PASSWORD: ledger
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SERVER_PORT: 9092
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=UTC"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ledger-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9092/api/v1/fraud/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ledger-net
+
   frontend:
     build:
       context: ./frontend
@@ -106,6 +138,7 @@ services:
     depends_on:
       - ledger-api
       - reconciliation-worker
+      - fraud-service
     networks:
       - ledger-net
 

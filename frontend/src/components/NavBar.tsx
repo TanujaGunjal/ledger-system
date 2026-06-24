@@ -7,9 +7,10 @@ interface NavBarProps {
 
 export default function NavBar({ activeView, onViewChange }: NavBarProps) {
   const tabs: { id: ViewState; label: string }[] = [
-    { id: 'queue', label: 'Reconciliation Queue' },
-    { id: 'post', label: 'Post Transaction' },
+    { id: 'queue',    label: 'Reconciliation Queue' },
+    { id: 'post',     label: 'Post Transaction' },
     { id: 'explorer', label: 'Ledger Explorer' },
+    { id: 'fraud',    label: '🛡 Fraud Queue' },
   ];
 
   return (

@@ -493,3 +493,206 @@ body {
   font-size: 12px;
   margin-top: 4px;
 }
+
+/* ── Fraud Queue ─────────────────────────────────────────────── */
+
+/* Risk badges — three distinct semantic colours */
+.fraud-risk-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fraud-risk-badge--high {
+  background: #dc2626;   /* solid red */
+  color: #ffffff;
+}
+
+.fraud-risk-badge--medium {
+  background: #d97706;   /* solid amber */
+  color: #ffffff;
+}
+
+.fraud-risk-badge--low {
+  background: #059669;   /* solid green */
+  color: #ffffff;
+}
+
+/* Status badges for fraud case lifecycle */
+.fraud-status-badge--open      { background: #b45309; color: #fff; }
+.fraud-status-badge--reviewed  { background: #047857; color: #fff; }
+.fraud-status-badge--dismissed { background: #6b7280; color: #fff; }
+
+/* Score chip — shows the numeric composite score */
+.fraud-score-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* Rule chips — one per triggered rule name */
+.fraud-rule-chip {
+  font-size: 10px;
+  font-weight: 500;
+  color: #4f46e5;          /* indigo — distinct from risk colours */
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* Fraud case body: two-column info layout + action buttons */
+.fraud-case-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: start;
+  gap: 16px;
+  padding: 14px 16px;
+  min-height: 80px;
+}
+
+@media (max-width: 720px) {
+  .fraud-case-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fraud-case-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Key-value pair inside a case column */
+.fraud-case-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fraud-meta-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  min-width: 52px;
+}
+
+.fraud-meta-value {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.fraud-meta-value--amount {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+/* Reasons list */
+.fraud-reasons-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fraud-reason-item {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  padding-left: 12px;
+  position: relative;
+}
+
+.fraud-reason-item::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--text-muted);
+}
+
+.fraud-no-reasons {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Action buttons column */
+.fraud-case-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+  min-width: 120px;
+}
+
+.fraud-case-reviewed-at {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: auto;
+}
+
+.fraud-action-btn {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.fraud-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fraud-action-btn:not(:disabled):hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.fraud-action-btn--confirm {
+  background: #dc2626;
+  color: #fff;
+}
+
+.fraud-action-btn--dismiss {
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+/* Summary chips in the page subtitle */
+.fraud-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.fraud-summary-chip--high   { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+.fraud-summary-chip--medium { background: #fffbeb; color: #d97706; border: 1px solid #fcd34d; }
+

@@ -62,4 +62,33 @@ export interface AccountBalance {
 }
 
 export type StatusFilter = 'OPEN' | 'ALL' | 'RESOLVED';
-export type ViewState = 'queue' | 'post' | 'explorer';
+export type ViewState = 'queue' | 'post' | 'explorer' | 'fraud';
+
+// ── Fraud service types ──────────────────────────────────────────────────────
+
+export type FraudRiskLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+export type FraudCaseStatus = 'OPEN' | 'REVIEWED' | 'DISMISSED';
+
+/**
+ * Matches the FraudCase Java record serialised by Jackson.
+ *
+ * - triggeredRules: comma-separated string of rule names, e.g. "VelocityRule,NewAccountRule"
+ * - details: JSON string (JSONB column) containing reasons[] and degradedMode flag.
+ *   Must be JSON.parse()'d to access nested fields.
+ * - amount: bare JSON number with 4 decimal places (e.g. 5000.0000).
+ * - reviewedAt: null while OPEN; ISO-8601 string after analyst action.
+ */
+export interface FraudCase {
+  id: number;
+  transactionRef: string;
+  accountId: number;
+  riskLevel: FraudRiskLevel;
+  score: number;
+  triggeredRules: string;      // comma-separated, e.g. "VelocityRule,AmountThresholdRule"
+  status: FraudCaseStatus;
+  amount: number | null;
+  currency: string | null;
+  details: string | null;      // JSON string — JSON.parse() to access reasons[]
+  createdAt: string;
+  reviewedAt: string | null;   // null while OPEN
+}
