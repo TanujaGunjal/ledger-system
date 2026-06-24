@@ -117,36 +117,3 @@ cd fraud-service
 
 The project includes a complete **GitHub Actions CI/CD pipeline** (`.github/workflows/ci.yml`) that automatically runs all unit and integration tests, and builds the frontend on every push to the `main` branch.
 
-## Known limitations
-
-These are real constraints in the current implementation, not oversights:
-
-- **Single-currency reconciliation.** The matching algorithm sums amounts without
-  grouping by currency. A transaction with USD and EUR legs would produce a
-  spurious mismatch if external statements are multi-currency.
-
-- **Debit-normal balance enforcement only.** `PostingExecutor` rejects any DEBIT
-  that would take a non-EQUITY account negative. Liability accounts that should
-  carry credit balances (e.g. accounts payable) require their own `accountType`
-  exemption — the EQUITY exemption added for the house account shows the pattern
-  but it is not generalised.
-
-- **No pagination on the exceptions endpoint.** `GET /api/v1/reconciliation/exceptions`
-  returns the full result set. At portfolio scale (hundreds of exceptions) this
-  is fine; at bank scale it needs a cursor. A one-line comment in
-  `ReconciliationExceptionRepository.findAll()` flags this.
-
-- **Kafka key provides transaction-level ordering, not cross-transaction
-  per-account ordering.** Each outbox event is keyed by `transactionId`, so
-  events for the same transaction are ordered. Events across different
-  transactions on the same account are not sequentially ordered at the Kafka
-  level — a consumer that cares about per-account ordering must re-sort by
-  `sequenceNo`.
-
-## What I would build next
-
-- **Admin dispute-resolution endpoint + UI.** A `POST /api/v1/reconciliation/exceptions/{id}/resolve` endpoint with an optional `resolutionNote` field, and a modal on the Reconciliation Queue to manually close exceptions that the engine cannot self-resolve (e.g. known rounding differences accepted by the business).
-
-- **WebSocket live balance updates.** The Kafka consumer in `ledger-api` already has a `@KafkaListener` stub and the WebSocket dependency is in the POM. Wire `LedgerEntryPublishedEvent` through a `SimpMessagingTemplate` so the Ledger Explorer balance updates in real time without polling.
-
-- **Per-currency amount tolerance in the reconciliation engine.** Replace the hard equality check with a configurable tolerance map (e.g. `USD: 0.01`, `EUR: 0.005`) to handle known FX rounding differences without manual exception closure.
