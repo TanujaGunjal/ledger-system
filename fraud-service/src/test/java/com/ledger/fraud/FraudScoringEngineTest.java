@@ -63,16 +63,10 @@ class FraudScoringEngineTest {
      * We set thresholds directly via reflection-friendly constructor injection.
      */
     private FraudScoringEngine engineWith(FraudRule... rules) {
-        // FraudScoringEngine reads thresholds from @Value fields.
-        // For unit tests we use a subclass that hard-codes default values
-        // so we do not need a Spring context or property source.
-        return new FraudScoringEngine(List.of(rules)) {
-            // The thresholds are private @Value fields — access them through a
-            // TestScoringEngine subclass that overrides classifyRisk indirectly
-            // by injecting through the constructor. Since @Value injection only
-            // fires in a Spring context, we create the engine normally and then
-            // set the fields via reflection in the test setup.
-        };
+        FraudScoringEngine engine = new FraudScoringEngine(List.of(rules));
+        org.springframework.test.util.ReflectionTestUtils.setField(engine, "mediumScoreThreshold", 31);
+        org.springframework.test.util.ReflectionTestUtils.setField(engine, "highScoreThreshold", 70);
+        return engine;
     }
 
     private FraudScoringEngine engine;
@@ -108,7 +102,7 @@ class FraudScoringEngineTest {
     @DisplayName("High velocity (8+ transactions) → HIGH risk regardless of amount")
     void highVelocity_returnsHigh() {
         engine = engineWith(
-            fixedRule("VelocityRule",       60, "8+ DEBITs in 10 min window"),
+            fixedRule("VelocityRule",       70, "8+ DEBITs in 10 min window"),
             fixedRule("AmountThresholdRule", 0,  ""),
             fixedRule("NewAccountRule",      0,  "")
         );
@@ -116,7 +110,7 @@ class FraudScoringEngineTest {
         FraudScore score = engine.score(TXN_REF, ACCOUNT, new BigDecimal("50"), USD);
 
         assertThat(score.riskLevel()).isEqualTo(RiskLevel.HIGH);
-        assertThat(score.totalScore()).isEqualTo(60);
+        assertThat(score.totalScore()).isEqualTo(70);
         assertThat(score.triggeredRules()).contains("VelocityRule");
         assertThat(score.degradedMode()).isFalse();
     }

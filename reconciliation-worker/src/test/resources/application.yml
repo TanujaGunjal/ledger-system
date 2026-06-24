@@ -1,9 +1,4 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5433/ledger
-    username: ${DB_USERNAME:ledger}
-    password: ${DB_PASSWORD:ledger}
-
   # Integration tests are self-contained: Flyway runs V1 + V2 against the
   # docker-compose Postgres so the test does not require ledger-api to have
   # started first. baseline-on-migrate handles the case where ledger-api has

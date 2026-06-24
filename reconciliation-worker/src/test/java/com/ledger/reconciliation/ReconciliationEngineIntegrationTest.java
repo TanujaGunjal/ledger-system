@@ -14,6 +14,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -44,7 +49,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   5. selfResolution          — MISSING_EXTERNAL on run 1, external arrives, RESOLVED + match on run 2
  */
 @SpringBootTest
+@Testcontainers
 class ReconciliationEngineIntegrationTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
 
     @Autowired ReconciliationEngine                engine;
     @Autowired ReconciliationExceptionRepository   exceptionRepo;

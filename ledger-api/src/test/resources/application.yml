@@ -1,11 +1,6 @@
 # Test configuration: same Postgres as production (docker-compose),
 # but suppress Redis and Kafka connection noise during test context startup.
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5433/ledger
-    username: ${DB_USERNAME:ledger}
-    password: ${DB_PASSWORD:ledger}
-
   flyway:
     enabled: true
     locations: classpath:db/migration
